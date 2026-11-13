@@ -1,0 +1,4 @@
+{
+  "kind": "KubernetesResourceVariable",
+  "spec": { "resource": "custom", "customResource": "example.com/v1/widgets", "namespace": "demo" }
+}

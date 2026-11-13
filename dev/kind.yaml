@@ -1,0 +1,18 @@
+# kind cluster for the dev stack (podman provider). up.sh fills in __DEV_DIR__ with this directory's absolute
+# path: the plugin archives and the Perses provisioning files reach the Perses pod through these mounts.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: perses-plugin-kubernetes
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30083 # Perses NodePort (k8s/perses.yaml)
+        hostPort: 18083
+        listenAddress: 127.0.0.1
+    extraMounts:
+      - hostPath: __DEV_DIR__/archive
+        containerPath: /dev-stack/archive
+        readOnly: true
+      - hostPath: __DEV_DIR__/provisioning
+        containerPath: /dev-stack/provisioning
+        readOnly: true

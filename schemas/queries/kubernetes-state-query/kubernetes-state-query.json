@@ -1,0 +1,16 @@
+{
+  "kind": "KubernetesStateQuery",
+  "spec": {
+    "datasource": { "kind": "KubernetesDatasource", "name": "kubernetes" },
+    "resource": "pods",
+    "namespace": "$namespace",
+    "labelSelector": "app=web",
+    "stateField": ".status.containerStatuses[*].state.waiting.reason || .status.phase",
+    "stateMapping": [
+      { "value": "Running", "code": 0 },
+      { "value": "Pending", "code": 1 },
+      { "value": "CrashLoopBackOff", "code": 2 }
+    ],
+    "labelFields": [{ "name": "node", "path": ".spec.nodeName" }]
+  }
+}

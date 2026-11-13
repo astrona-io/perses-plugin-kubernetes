@@ -1,0 +1,4 @@
+{
+  "kind": "KubernetesResourceVariable",
+  "spec": { "resource": "pods", "datasource": { "kind": "PrometheusDatasource" } }
+}

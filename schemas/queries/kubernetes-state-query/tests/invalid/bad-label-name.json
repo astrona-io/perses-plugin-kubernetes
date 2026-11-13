@@ -1,0 +1,4 @@
+{
+  "kind": "KubernetesStateQuery",
+  "spec": { "resource": "pods", "labelFields": [{ "name": "bad-name", "path": ".spec.nodeName" }] }
+}

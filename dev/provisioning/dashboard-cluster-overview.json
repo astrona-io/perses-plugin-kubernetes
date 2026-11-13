@@ -1,0 +1,428 @@
+{
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "cluster-overview",
+    "project": "kubernetes"
+  },
+  "spec": {
+    "display": {
+      "name": "Cluster overview"
+    },
+    "duration": "15m",
+    "refreshInterval": "30s",
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "namespace",
+          "display": {
+            "name": "Namespace",
+            "hidden": false,
+            "description": "All means one cluster-wide request (customAllValue \"*\")."
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "plugin": {
+            "kind": "KubernetesResourceVariable",
+            "spec": {
+              "datasource": {
+                "kind": "KubernetesDatasource",
+                "name": "kubernetes"
+              },
+              "resource": "namespaces",
+              "filter": "^(?!kube-|local-path-storage$)"
+            }
+          },
+          "customAllValue": "*",
+          "defaultValue": "$__all"
+        }
+      }
+    ],
+    "panels": {
+      "pods": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pods",
+            "description": "Every pod, coloured by its container waiting reason or phase. Click a namespace, then an app."
+          },
+          "plugin": {
+            "kind": "HoneycombChart",
+            "spec": {
+              "calculation": "last",
+              "nameLabel": "name",
+              "thresholds": {
+                "defaultColor": "#2e7d32",
+                "steps": [
+                  {
+                    "value": 1,
+                    "color": "#ed6c02"
+                  },
+                  {
+                    "value": 2,
+                    "color": "#d32f2f"
+                  }
+                ]
+              },
+              "mappings": [
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "0",
+                    "result": {
+                      "value": "OK",
+                      "color": "#2e7d32"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "1",
+                    "result": {
+                      "value": "Pending",
+                      "color": "#ed6c02"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "2",
+                    "result": {
+                      "value": "Failing",
+                      "color": "#d32f2f"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "-1",
+                    "result": {
+                      "value": "Unknown",
+                      "color": "#757575"
+                    }
+                  }
+                }
+              ],
+              "currentOnly": true,
+              "shape": "hexagon",
+              "sort": "severity",
+              "showValues": false,
+              "showLegend": true,
+              "groupBy": "namespace",
+              "drillDown": ["app"]
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "KubernetesStateQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "KubernetesDatasource",
+                      "name": "kubernetes"
+                    },
+                    "resource": "pods",
+                    "namespace": "$namespace",
+                    "stateField": ".status.containerStatuses[*].state.waiting.reason || .status.containerStatuses[*].state.terminated.reason || .status.phase",
+                    "labelFields": [
+                      {
+                        "name": "app",
+                        "path": ".metadata.labels['app']"
+                      },
+                      {
+                        "name": "node",
+                        "path": ".spec.nodeName"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "warnings": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Warning events",
+            "description": "Newest first, from the events API."
+          },
+          "plugin": {
+            "kind": "LogsTable",
+            "spec": {
+              "allowWrap": true,
+              "enableDetails": true,
+              "showTime": true
+            }
+          },
+          "queries": [
+            {
+              "kind": "LogQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "KubernetesEventsQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "KubernetesDatasource",
+                      "name": "kubernetes"
+                    },
+                    "namespace": "$namespace",
+                    "type": "Warning",
+                    "limit": 500
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "deployments": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Deployments",
+            "description": "The Available condition of each deployment."
+          },
+          "plugin": {
+            "kind": "HoneycombChart",
+            "spec": {
+              "calculation": "last",
+              "nameLabel": "name",
+              "thresholds": {
+                "defaultColor": "#2e7d32",
+                "steps": [
+                  {
+                    "value": 1,
+                    "color": "#ed6c02"
+                  },
+                  {
+                    "value": 2,
+                    "color": "#d32f2f"
+                  }
+                ]
+              },
+              "mappings": [
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "0",
+                    "result": {
+                      "value": "OK",
+                      "color": "#2e7d32"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "1",
+                    "result": {
+                      "value": "Pending",
+                      "color": "#ed6c02"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "2",
+                    "result": {
+                      "value": "Failing",
+                      "color": "#d32f2f"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "-1",
+                    "result": {
+                      "value": "Unknown",
+                      "color": "#757575"
+                    }
+                  }
+                }
+              ],
+              "currentOnly": true,
+              "shape": "hexagon",
+              "sort": "severity",
+              "showValues": false,
+              "showLegend": true,
+              "groupBy": "namespace"
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "KubernetesStateQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "KubernetesDatasource",
+                      "name": "kubernetes"
+                    },
+                    "resource": "deployments",
+                    "namespace": "$namespace",
+                    "stateField": ".status.conditions[?(@.type==\"Available\")].status"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "nodes": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Nodes",
+            "description": "The Ready condition of each node."
+          },
+          "plugin": {
+            "kind": "HoneycombChart",
+            "spec": {
+              "calculation": "last",
+              "nameLabel": "name",
+              "thresholds": {
+                "defaultColor": "#2e7d32",
+                "steps": [
+                  {
+                    "value": 1,
+                    "color": "#ed6c02"
+                  },
+                  {
+                    "value": 2,
+                    "color": "#d32f2f"
+                  }
+                ]
+              },
+              "mappings": [
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "0",
+                    "result": {
+                      "value": "OK",
+                      "color": "#2e7d32"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "1",
+                    "result": {
+                      "value": "Pending",
+                      "color": "#ed6c02"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "2",
+                    "result": {
+                      "value": "Failing",
+                      "color": "#d32f2f"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "-1",
+                    "result": {
+                      "value": "Unknown",
+                      "color": "#757575"
+                    }
+                  }
+                }
+              ],
+              "currentOnly": true,
+              "shape": "hexagon",
+              "sort": "severity",
+              "showValues": false,
+              "showLegend": true
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "KubernetesStateQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "KubernetesDatasource",
+                      "name": "kubernetes"
+                    },
+                    "resource": "nodes",
+                    "stateField": ".status.conditions[?(@.type==\"Ready\")].status"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Workloads",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 14,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/pods"
+              }
+            },
+            {
+              "x": 14,
+              "y": 0,
+              "width": 6,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/deployments"
+              }
+            },
+            {
+              "x": 20,
+              "y": 0,
+              "width": 4,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/nodes"
+              }
+            },
+            {
+              "x": 0,
+              "y": 10,
+              "width": 24,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/warnings"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

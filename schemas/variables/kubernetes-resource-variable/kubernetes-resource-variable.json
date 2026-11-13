@@ -1,0 +1,12 @@
+{
+  "kind": "KubernetesResourceVariable",
+  "spec": {
+    "datasource": { "kind": "KubernetesDatasource", "name": "kubernetes" },
+    "resource": "deployments",
+    "namespace": "$namespace",
+    "labelSelector": "app.kubernetes.io/part-of=shop",
+    "valueField": ".metadata.name",
+    "labelField": ".metadata.labels['app.kubernetes.io/name'] || .metadata.name",
+    "filter": "^web-"
+  }
+}

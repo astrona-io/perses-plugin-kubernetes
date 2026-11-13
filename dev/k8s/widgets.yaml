@@ -1,0 +1,20 @@
+# Applied once the Widget CRD is established (see up.sh).
+apiVersion: example.com/v1
+kind: Widget
+metadata: { name: sprocket, namespace: demo }
+status: { phase: Ready }
+---
+apiVersion: example.com/v1
+kind: Widget
+metadata: { name: gear, namespace: demo }
+status: { phase: Ready }
+---
+apiVersion: example.com/v1
+kind: Widget
+metadata: { name: flywheel, namespace: demo }
+status: { phase: Reconciling }
+---
+apiVersion: example.com/v1
+kind: Widget
+metadata: { name: cog, namespace: demo }
+status: { phase: Failed }
