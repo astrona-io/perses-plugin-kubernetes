@@ -1,0 +1,4 @@
+{
+  "kind": "KubernetesStateQuery",
+  "spec": { "resource": "deployments", "stateField": ".status.conditions[?(@.type==\"Available\")].status" }
+}

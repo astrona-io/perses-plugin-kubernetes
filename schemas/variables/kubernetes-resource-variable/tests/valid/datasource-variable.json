@@ -1,0 +1,1 @@
+{ "kind": "KubernetesResourceVariable", "spec": { "resource": "pods", "datasource": "$ds" } }

@@ -1,0 +1,4 @@
+{
+  "kind": "KubernetesStateQuery",
+  "spec": { "resource": "pods", "stateMapping": [{ "value": "Running", "code": "ok" }] }
+}

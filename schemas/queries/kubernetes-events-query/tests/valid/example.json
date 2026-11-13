@@ -1,0 +1,12 @@
+{
+  "kind": "KubernetesEventsQuery",
+  "spec": {
+    "datasource": { "kind": "KubernetesDatasource", "name": "kubernetes" },
+    "namespace": "$namespace",
+    "involvedObjectKind": "Pod",
+    "involvedObjectName": "$pod",
+    "type": "Warning",
+    "reason": "^(BackOff|Failed)$",
+    "limit": 500
+  }
+}
