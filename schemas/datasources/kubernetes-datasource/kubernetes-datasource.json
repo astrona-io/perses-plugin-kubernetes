@@ -1,0 +1,20 @@
+{
+  "kind": "KubernetesDatasource",
+  "spec": {
+    "proxy": {
+      "kind": "HTTPProxy",
+      "spec": {
+        "url": "https://kubernetes.default.svc",
+        "secret": "kubernetes-in-cluster",
+        "allowedEndpoints": [
+          { "endpointPattern": "^/api/v1/(namespaces|nodes)$", "method": "GET" },
+          { "endpointPattern": "^/api/v1/(namespaces/[a-z0-9]([-a-z0-9]*[a-z0-9])?/)?(pods|events)$", "method": "GET" },
+          {
+            "endpointPattern": "^/apis/apps/v1/(namespaces/[a-z0-9]([-a-z0-9]*[a-z0-9])?/)?(deployments|statefulsets|daemonsets|replicasets)$",
+            "method": "GET"
+          }
+        ]
+      }
+    }
+  }
+}

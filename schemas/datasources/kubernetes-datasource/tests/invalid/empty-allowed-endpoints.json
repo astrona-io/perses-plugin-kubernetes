@@ -1,0 +1,6 @@
+{
+  "kind": "KubernetesDatasource",
+  "spec": {
+    "proxy": { "kind": "HTTPProxy", "spec": { "url": "https://kubernetes.default.svc", "allowedEndpoints": [] } }
+  }
+}

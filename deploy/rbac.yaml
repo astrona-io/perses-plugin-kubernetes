@@ -1,0 +1,90 @@
+# Least-privilege access for the Perses Kubernetes datasource.
+#
+# Perses talks to the API server as a service account (in-cluster: the one its pod runs as; out of
+# cluster: one whose token you put in a Perses secret). Give that account read-only list access to
+# the resources the plugin reads, and nothing else:
+#
+#   - verbs get and list only. Never watch (the Perses proxy matches paths, not query strings, so
+#     `?watch=true` is refused here, by RBAC), never create/update/patch/delete.
+#   - no secrets, configmaps, serviceaccounts or tokens.
+#   - no subresources: pods/log, pods/exec, pods/attach, pods/portforward, pods/proxy, nodes/proxy,
+#     services/proxy are not granted (RBAC treats a subresource as a separate resource).
+#
+# Pick ONE of the two variants:
+#
+#   A. Cluster-wide (ClusterRole + ClusterRoleBinding): dashboards can show every namespace.
+#   B. Namespaced (Role + RoleBinding, one per namespace): dashboards see only those namespaces.
+#      Namespaces and nodes are cluster-scoped, so a namespaced Role can't list them: use a fixed
+#      list or a custom variable for the namespace instead of a KubernetesResourceVariable.
+#
+# Change `perses` / `perses` (service account / namespace) to where Perses runs.
+#
+#   kubectl apply -f deploy/rbac.yaml                  # both variants as written: A, plus B for "demo"
+#   kubectl apply -f <(yq 'select(.kind | test("Cluster"))' deploy/rbac.yaml)   # A only
+---
+# A. Cluster-wide read
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: perses-kubernetes-datasource
+  labels:
+    app.kubernetes.io/name: perses-plugin-kubernetes
+rules:
+  - apiGroups: ['']
+    resources: [namespaces, nodes, pods, events]
+    verbs: [get, list]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, daemonsets, replicasets]
+    verbs: [get, list]
+  # Optional: custom resources. Add one rule per group, and the matching allow-list entry to the
+  # datasource (see "Custom resources" in the README). Never use resources: ["*"].
+  # - apiGroups: [kustomize.toolkit.fluxcd.io]
+  #   resources: [kustomizations]
+  #   verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: perses-kubernetes-datasource
+  labels:
+    app.kubernetes.io/name: perses-plugin-kubernetes
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: perses-kubernetes-datasource
+subjects:
+  - kind: ServiceAccount
+    name: perses
+    namespace: perses
+---
+# B. Namespaced read: repeat the Role and RoleBinding for each namespace Perses may show.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: perses-kubernetes-datasource
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: perses-plugin-kubernetes
+rules:
+  - apiGroups: ['']
+    resources: [pods, events]
+    verbs: [get, list]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, daemonsets, replicasets]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: perses-kubernetes-datasource
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: perses-plugin-kubernetes
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: perses-kubernetes-datasource
+subjects:
+  - kind: ServiceAccount
+    name: perses
+    namespace: perses

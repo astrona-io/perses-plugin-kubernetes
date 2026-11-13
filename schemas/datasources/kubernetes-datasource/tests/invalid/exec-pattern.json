@@ -1,0 +1,12 @@
+{
+  "kind": "KubernetesDatasource",
+  "spec": {
+    "proxy": {
+      "kind": "HTTPProxy",
+      "spec": {
+        "url": "https://kubernetes.default.svc",
+        "allowedEndpoints": [{ "endpointPattern": "^/api/v1/namespaces/[a-z]+/pods/[a-z]+/exec$", "method": "GET" }]
+      }
+    }
+  }
+}
