@@ -1,0 +1,383 @@
+{
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "workload-explorer",
+    "project": "kubernetes"
+  },
+  "spec": {
+    "display": {
+      "name": "Workload explorer"
+    },
+    "duration": "15m",
+    "refreshInterval": "30s",
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "namespace",
+          "display": {
+            "name": "Namespace",
+            "hidden": false
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "plugin": {
+            "kind": "KubernetesResourceVariable",
+            "spec": {
+              "datasource": {
+                "kind": "KubernetesDatasource",
+                "name": "kubernetes"
+              },
+              "resource": "namespaces",
+              "filter": "^(?!kube-|local-path-storage$)"
+            }
+          }
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "deployment",
+          "display": {
+            "name": "Deployment",
+            "hidden": false,
+            "description": "Deployments in $namespace."
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "plugin": {
+            "kind": "KubernetesResourceVariable",
+            "spec": {
+              "datasource": {
+                "kind": "KubernetesDatasource",
+                "name": "kubernetes"
+              },
+              "resource": "deployments",
+              "namespace": "$namespace"
+            }
+          },
+          "defaultValue": "$__all"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "pod",
+          "display": {
+            "name": "Pod",
+            "hidden": false,
+            "description": "Pods of the chosen deployments."
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "plugin": {
+            "kind": "KubernetesResourceVariable",
+            "spec": {
+              "datasource": {
+                "kind": "KubernetesDatasource",
+                "name": "kubernetes"
+              },
+              "resource": "pods",
+              "namespace": "$namespace",
+              "filter": "^($deployment)-"
+            }
+          },
+          "defaultValue": "$__all"
+        }
+      }
+    ],
+    "panels": {
+      "podState": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pod state",
+            "description": "Pods of the chosen deployments."
+          },
+          "plugin": {
+            "kind": "HoneycombChart",
+            "spec": {
+              "calculation": "last",
+              "nameLabel": "name",
+              "thresholds": {
+                "defaultColor": "#2e7d32",
+                "steps": [
+                  {
+                    "value": 1,
+                    "color": "#ed6c02"
+                  },
+                  {
+                    "value": 2,
+                    "color": "#d32f2f"
+                  }
+                ]
+              },
+              "mappings": [
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "0",
+                    "result": {
+                      "value": "OK",
+                      "color": "#2e7d32"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "1",
+                    "result": {
+                      "value": "Pending",
+                      "color": "#ed6c02"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "2",
+                    "result": {
+                      "value": "Failing",
+                      "color": "#d32f2f"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "-1",
+                    "result": {
+                      "value": "Unknown",
+                      "color": "#757575"
+                    }
+                  }
+                }
+              ],
+              "currentOnly": true,
+              "shape": "hexagon",
+              "sort": "severity",
+              "showValues": false,
+              "showLegend": true,
+              "groupBy": "app"
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "KubernetesStateQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "KubernetesDatasource",
+                      "name": "kubernetes"
+                    },
+                    "resource": "pods",
+                    "namespace": "$namespace",
+                    "labelSelector": "app in (${deployment:csv})",
+                    "stateField": ".status.containerStatuses[*].state.waiting.reason || .status.containerStatuses[*].state.terminated.reason || .status.phase",
+                    "labelFields": [
+                      {
+                        "name": "app",
+                        "path": ".metadata.labels['app']"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "events": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Events",
+            "description": "Events about the chosen pods."
+          },
+          "plugin": {
+            "kind": "LogsTable",
+            "spec": {
+              "allowWrap": true,
+              "enableDetails": true,
+              "showTime": true
+            }
+          },
+          "queries": [
+            {
+              "kind": "LogQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "KubernetesEventsQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "KubernetesDatasource",
+                      "name": "kubernetes"
+                    },
+                    "namespace": "$namespace",
+                    "involvedObjectKind": "Pod",
+                    "involvedObjectName": "$pod"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "widgets": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Widgets (custom resource)",
+            "description": "example.com/v1 widgets in namespace demo, by status.phase."
+          },
+          "plugin": {
+            "kind": "HoneycombChart",
+            "spec": {
+              "calculation": "last",
+              "nameLabel": "name",
+              "thresholds": {
+                "defaultColor": "#2e7d32",
+                "steps": [
+                  {
+                    "value": 1,
+                    "color": "#ed6c02"
+                  },
+                  {
+                    "value": 2,
+                    "color": "#d32f2f"
+                  }
+                ]
+              },
+              "mappings": [
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "0",
+                    "result": {
+                      "value": "OK",
+                      "color": "#2e7d32"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "1",
+                    "result": {
+                      "value": "Pending",
+                      "color": "#ed6c02"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "2",
+                    "result": {
+                      "value": "Failing",
+                      "color": "#d32f2f"
+                    }
+                  }
+                },
+                {
+                  "kind": "Value",
+                  "spec": {
+                    "value": "-1",
+                    "result": {
+                      "value": "Unknown",
+                      "color": "#757575"
+                    }
+                  }
+                }
+              ],
+              "currentOnly": true,
+              "shape": "hexagon",
+              "sort": "severity",
+              "showValues": false,
+              "showLegend": true
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "KubernetesStateQuery",
+                  "spec": {
+                    "datasource": {
+                      "kind": "KubernetesDatasource",
+                      "name": "kubernetes"
+                    },
+                    "resource": "custom",
+                    "customResource": "example.com/v1/widgets",
+                    "namespace": "demo",
+                    "stateField": ".status.phase",
+                    "stateMapping": [
+                      {
+                        "value": "Ready",
+                        "code": 0
+                      },
+                      {
+                        "value": "Reconciling",
+                        "code": 1
+                      },
+                      {
+                        "value": "Failed",
+                        "code": 2
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Workload",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "content": {
+                "$ref": "#/spec/panels/podState"
+              }
+            },
+            {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "content": {
+                "$ref": "#/spec/panels/widgets"
+              }
+            },
+            {
+              "x": 0,
+              "y": 8,
+              "width": 24,
+              "height": 10,
+              "content": {
+                "$ref": "#/spec/panels/events"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

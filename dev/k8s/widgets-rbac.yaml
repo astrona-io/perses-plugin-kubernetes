@@ -1,0 +1,22 @@
+# Read access to the demo custom resource, the extra rule deploy/rbac.yaml shows commented out.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: perses-kubernetes-datasource-widgets
+rules:
+  - apiGroups: ['example.com']
+    resources: ['widgets']
+    verbs: ['get', 'list']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: perses-kubernetes-datasource-widgets
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: perses-kubernetes-datasource-widgets
+subjects:
+  - kind: ServiceAccount
+    name: perses
+    namespace: perses
