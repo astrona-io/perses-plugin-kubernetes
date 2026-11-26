@@ -76,7 +76,7 @@
     "mf-manifest.json",
     "mf-stats.json"
   ],
-  "packageManager": "npm@11.17.0",
+  "packageManager": "npm@11.21.3",
   "perses": {
     "metadata": {
       "name": "Kubernetes",
